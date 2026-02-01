@@ -1,3 +1,10 @@
+/**
+ * File that calculates the sum (non-inclusive) of variables 0-N.
+ * Divides the workload evenly using multitasking.
+ * Uses: pipe(), fork(), and waitpid()
+ * Author: Nick Schwartz and Robert Rodarte
+ * Date: 1/31/2026
+ */
 #include "multitasking_one.h"
 #include <stdio.h>
 #include <stdlib.h>

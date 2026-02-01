@@ -1,9 +1,7 @@
 /**
  * File that calculates the sum (non-inclusive) of variables 0-N.
- * Uses baseline and divides the workload evenly among different 
+ * Divides the workload evenly among different 
  * number of threads.
- * Features: Task parallelism, Task synchronization, and inter-process
- * communication 
  * Uses: Pthread libary
  * Author: Nick Schwartz and Robert Rodarte
  * Date: 1/31/2026

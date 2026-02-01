@@ -1,6 +1,6 @@
 /**
  * File that calculates the sum (non-inclusive) of variables 0-N.
- * Divides the workload evenly among different 
+ * Divides the workload evenly among different
  * number of threads.
  * Uses: Pthread libary
  * Author: Nick Schwartz and Robert Rodarte
@@ -14,9 +14,30 @@
 long long N = 100000000;
 int NUM_THREADS = 2;
 
-int main(int argc, char *argv[]) {
+void *sum_range(void *arg)
+{
+    // Initialize
+    __int128_t _sum = 0;
+    // Cast void* back to struct thread_data*
+    struct thread_data *data = (struct thread_data *)arg;
+
+    // Loop from start to end, calculating sums
+    for (long long i = data->start; i < data->stop; i++)
+    {
+        _sum += i;
+    }
+
+    // Store result in structs sum field
+    data->sum = _sum;
+    // Nothing to return
+    return NULL;
+}
+
+int main(int argc, char *argv[])
+{
     // Handle command line inputs
-    if (argc >= 3) {
+    if (argc >= 3)
+    {
         N = atoll(argv[1]);
         NUM_THREADS = atoll(argv[2]);
     }
@@ -31,15 +52,19 @@ int main(int argc, char *argv[]) {
     __int128_t total_sum = 0;
 
     // Create all the threads
-    for(long long i = 0; i < NUM_THREADS; i++) {
+    for (long long i = 0; i < NUM_THREADS; i++)
+    {
         // Initialize thread info
         thread_data_array[i].start = i * chunk_size;
         thread_data_array[i].sum = 0;
 
         // Due to indexing, don't skip last N value
-        if(i == NUM_THREADS - 1) {
+        if (i == NUM_THREADS - 1)
+        {
             thread_data_array[i].stop = N;
-        } else {
+        }
+        else
+        {
             thread_data_array[i].stop = (i + 1) * chunk_size;
         }
 
@@ -49,33 +74,18 @@ int main(int argc, char *argv[]) {
     }
 
     // Wait for all threads to finish
-    for(long long i = 0; i < NUM_THREADS; i++) {
+    for (long long i = 0; i < NUM_THREADS; i++)
+    {
         pthread_join(threads[i], NULL);
     }
 
     // Store output of all threads in total sum
-    for(long long i = 0; i < NUM_THREADS; i++) {
+    for (long long i = 0; i < NUM_THREADS; i++)
+    {
         total_sum += thread_data_array[i].sum;
     }
 
     // Return success
     printf("Range: 0 - %lld\nNum of Threads: %d\n", N, NUM_THREADS);
     return 0;
-}
-
-void* sum_range(void* arg) {
-    // Initialize
-    __int128_t _sum = 0;
-    // Cast void* back to struct thread_data*
-    struct thread_data* data = (struct thread_data*) arg;
-
-    // Loop from start to end, calculating sums
-    for(long long i = data->start; i < data->stop; i++) {
-        _sum += i;
-    }
-
-    // Store result in structs sum field
-    data->sum = _sum;
-    // Nothing to return
-    return NULL;
 }

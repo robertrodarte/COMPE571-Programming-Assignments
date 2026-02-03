@@ -1,38 +1,61 @@
-/**
- * File that calculates the sum (non-inclusive) of variables 0-N.
- * Divides the workload evenly among different
- * number of threads.
- * Uses: Pthread libary
- * Author: Nick Schwartz and Robert Rodarte
- * Date: 1/31/2026
- */
-#include "multithreading.h"
+//------------------------------------------------------------------------------
+// File:    multithreading.c
+// Author:  Nick Schwartz, Robert Rodarte
+// Date:    2026-01-31
+// Brief:   File that calculates the sum (non-inclusive) of variables 0-N.
+//          Divides the workload evenly among different number of threads.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//             __             __   ___  __
+//     | |\ | /  ` |    |  | |  \ |__  /__`
+//     | | \| \__, |___ \__/ |__/ |___ .__/
+//
+//------------------------------------------------------------------------------
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 
+//-----------------------------------------------------------------------------
+//      __   ___  ___         ___  __
+//     |  \ |__  |__  | |\ | |__  /__`
+//     |__/ |___ |    | | \| |___ .__/
+//-----------------------------------------------------------------------------
 long long N = 100000000;
 int NUM_THREADS = 2;
 
-void *sum_range(void *arg)
+//-----------------------------------------------------------------------------
+//     ___      __   ___  __   ___  ___  __
+//      |  \ / |__) |__  |  \ |__  |__  /__`
+//      |   |  |    |___ |__/ |___ |    .__/
+//-----------------------------------------------------------------------------
+struct thread_data
 {
-    // Initialize
-    __int128_t _sum = 0;
-    // Cast void* back to struct thread_data*
-    struct thread_data *data = (struct thread_data *)arg;
+    long long start;
+    long long stop;
+    __int128_t sum;
+};
 
-    // Loop from start to end, calculating sums
-    for (long long i = data->start; i < data->stop; i++)
-    {
-        _sum += i;
-    }
+//-----------------------------------------------------------------------------
+//                __          __        ___  __
+//     \  /  /\  |__) |  /\  |__) |    |__  /__`
+//      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
+//-----------------------------------------------------------------------------
 
-    // Store result in structs sum field
-    data->sum = _sum;
-    // Nothing to return
-    return NULL;
-}
+//-----------------------------------------------------------------------------
+//      __   __   __  ___  __  ___      __   ___  __
+//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
+//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
+//-----------------------------------------------------------------------------
+static void *sum_range(void *arg);
 
+//-----------------------------------------------------------------------------
+//      __        __          __
+//     |__) |  | |__) |    | /  `
+//     |    \__/ |__) |___ | \__,
+//
+//-----------------------------------------------------------------------------
+//=============================================================================
 int main(int argc, char *argv[])
 {
     // Handle command line inputs
@@ -89,3 +112,34 @@ int main(int argc, char *argv[])
     printf("Range: 0 - %lld\nNum of Threads: %d\n", N, NUM_THREADS);
     return 0;
 }
+
+//-----------------------------------------------------------------------------
+//      __   __              ___  ___
+//     |__) |__) | \  /  /\   |  |__
+//     |    |  \ |  \/  /~~\  |  |___
+//
+//-----------------------------------------------------------------------------
+static void *sum_range(void *arg)
+{
+    // Initialize
+    __int128_t _sum = 0;
+    // Cast void* back to struct thread_data*
+    struct thread_data *data = (struct thread_data *)arg;
+
+    // Loop from start to end, calculating sums
+    for (long long i = data->start; i < data->stop; i++)
+    {
+        _sum += i;
+    }
+
+    // Store result in structs sum field
+    data->sum = _sum;
+    // Nothing to return
+    return NULL;
+}
+
+//-----------------------------------------------------------------------------
+//        __   __   __
+//     | /__` |__) /__`
+//     | .__/ |  \ .__/
+//-----------------------------------------------------------------------------

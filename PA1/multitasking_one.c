@@ -152,12 +152,12 @@ int main(int argc, char *argv[])
 static void sum_range(struct task_data *data)
 {
     // Calculate sum for the task
-    __int128_t _sum = 0;
+    __int128_t sum = 0;
     for (long long i = data->start; i < data->stop; i++)
     {
-        _sum += i;
+        sum += i;
     }
-    data->sum = _sum;
+    data->sum = sum;
     return;
 }
 

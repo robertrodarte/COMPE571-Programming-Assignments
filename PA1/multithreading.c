@@ -122,18 +122,18 @@ int main(int argc, char *argv[])
 static void *sum_range(void *arg)
 {
     // Initialize
-    __int128_t _sum = 0;
+    __int128_t sum = 0;
     // Cast void* back to struct thread_data*
     struct thread_data *data = (struct thread_data *)arg;
 
     // Loop from start to end, calculating sums
     for (long long i = data->start; i < data->stop; i++)
     {
-        _sum += i;
+        sum += i;
     }
 
     // Store result in structs sum field
-    data->sum = _sum;
+    data->sum = sum;
     // Nothing to return
     return NULL;
 }

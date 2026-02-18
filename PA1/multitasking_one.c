@@ -117,14 +117,18 @@ int main(int argc, char *argv[])
         // Determine if child(pid == 0) or parent process
         if (0 == pids[i])
         {
-            // Close the read end of the pipe since child just needs to read
+            // Close the read end of the pipe since child just needs to write
             close(fd[i][0]);
-            // Calculate sum for the task using child's task_data object
-            sum_range(&task_data_array[i]);
-            // Write the sum of the child's task_data object to the pipe
-            write(fd[i][1], &task_data_array[i].sum, sizeof(task_data_array[i].sum));
+            // Close stdout so we can assign it with dup
+            close(STDOUT_FILENO);
+            // Assign stdout to pipe write
+            dup(fd[i][1]);
             // Close the write end of the pipe for this task since we are done with it
             close(fd[i][1]);
+            // Calculate sum for the task using child's task_data object
+            sum_range(&task_data_array[i]);
+            // Write the sum of the child's task_data object to the pipe using stdout (dup)
+            write(STDOUT_FILENO, &task_data_array[i].sum, sizeof(task_data_array[i].sum));
             // Kill the child process so it doesn't continue running
             _exit(0);
         }

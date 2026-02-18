@@ -5,6 +5,8 @@
 // Brief:   File that calculates the sum (non-inclusive) of variables 0-N.
 //          Divides the workload evenly using multitasking.
 //------------------------------------------------------------------------------
+// Used for timing
+#define _POSIX_C_SOURCE 199309L
 
 //------------------------------------------------------------------------------
 //             __             __   ___  __
@@ -16,13 +18,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 
 //-----------------------------------------------------------------------------
 //      __   ___  ___         ___  __
 //     |  \ |__  |__  | |\ | |__  /__`
 //     |__/ |___ |    | | \| |___ .__/
 //-----------------------------------------------------------------------------
-long long N = 10000000;
+long long N = 100000000;
 int NUM_TASKS = 2;
 
 //-----------------------------------------------------------------------------
@@ -49,6 +52,7 @@ struct task_data
 //     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
 //-----------------------------------------------------------------------------
 static void sum_range(struct task_data *data);
+static void print_int128(__int128_t n);
 
 //-----------------------------------------------------------------------------
 //      __        __          __
@@ -77,6 +81,13 @@ int main(int argc, char *argv[])
     __int128_t total_sum = 0;
     // Calculates chunks to sum over
     long long chunk_size = N / NUM_TASKS;
+
+    // Initialize time variables
+    struct timespec t_start, t_end;
+    double total_work_time;
+
+    // Get timestamp
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
 
     // Create pipes
     for (int i = 0; i < NUM_TASKS; i++)
@@ -138,8 +149,17 @@ int main(int argc, char *argv[])
         close(fd[i][0]);
     }
 
+    // Grab timestamp
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
+
+    // Calculate work time
+    total_work_time = ((t_end.tv_sec - t_start.tv_sec) * 1e9) + (t_end.tv_nsec - t_start.tv_nsec);
+
     // Return success
-    printf("Range: 0 - %lld\nNum of Tasks: %d\n", N, NUM_TASKS);
+    printf("Total Sum: ");
+    print_int128(total_sum);
+    printf("\n");
+    printf("Range: 0 - %lld\nNum of Tasks: %d\nTotal Time: %f (ns) or %f (s)\n", N, NUM_TASKS, total_work_time, total_work_time / 1e9);
     return 0;
 }
 
@@ -149,6 +169,7 @@ int main(int argc, char *argv[])
 //     |    |  \ |  \/  /~~\  |  |___
 //
 //-----------------------------------------------------------------------------
+//=============================================================================
 static void sum_range(struct task_data *data)
 {
     // Calculate sum for the task
@@ -159,6 +180,25 @@ static void sum_range(struct task_data *data)
     }
     data->sum = sum;
     return;
+}
+
+//=============================================================================
+static void print_int128(__int128_t n)
+{
+    // If negative print a negative sign
+    if (n < 0)
+    {
+        printf("-");
+        n = -n;
+    }
+
+    // If n is greated than 9
+    if (n > 9)
+        // Keep calling recursively to print each digit of the large sum
+        print_int128(n / 10);
+
+    // Print the digit as a char using an ASCII conversion
+    printf("%c", (char)('0' + n % 10));
 }
 
 //-----------------------------------------------------------------------------

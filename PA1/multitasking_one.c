@@ -192,7 +192,7 @@ static void print_int128(__int128_t n)
         n = -n;
     }
 
-    // If n is greated than 9
+    // If n is greater than 9
     if (n > 9)
         // Keep calling recursively to print each digit of the large sum
         print_int128(n / 10);

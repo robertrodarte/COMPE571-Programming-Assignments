@@ -121,14 +121,6 @@ int main(int argc, char *argv[])
         long long hi = (N * (i + 1)) / NUM_TASKS;
 
         unsigned long long partial_sum = 0;
-        if (fscanf(fps[i], "%llu", &partial_sum) != 1)
-        {
-            fprintf(stderr, "Failed reading child %d output for [%lld, %lld).\n",
-                    i, lo, hi);
-            pclose(fps[i]);
-            free(fps);
-            return 1;
-        }
 
         pclose(fps[i]);
 

@@ -3,7 +3,7 @@
 // Author:  Nick Schwartz, Robert Rodarte
 // Date:    2026-01-31
 // Brief:   File that calculates the sum (non-inclusive) of variables 0-N.
-//          Divides the workload evenly using multitasking.
+//          Divides the workload evenly using multitasking (concurrent).
 //------------------------------------------------------------------------------
 // Used for timing
 #define _POSIX_C_SOURCE 200112L
@@ -69,9 +69,6 @@ int main(int argc, char *argv[])
     struct timespec t_start, t_end;
     double total_work_time;
 
-    // Get timestamp
-    clock_gettime(CLOCK_MONOTONIC, &t_start);
-
     // Check if running as child process `--child <lo> <hi>`
     if (argc == 4 && strcmp(argv[1], "--child") == 0)
     {
@@ -95,44 +92,45 @@ int main(int argc, char *argv[])
         exit(1);
     }
 
-    // Use different names or just reuse globals
     long long N = atoll(argv[1]);
     int NUM_TASKS = atoi(argv[2]);
 
-    __int128_t total_sum = 0;
+    // Allocate array of FILE pointers — one per child process
+    FILE **fps = malloc(NUM_TASKS * sizeof(FILE *));
 
-    // Loop in the parent: spawn one child per chunk, read its partial sum, add up
+    // Get start timestamp before spawning any children
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
+
+    // --- Spawn ALL children concurrently ---
     for (int i = 0; i < NUM_TASKS; i++)
     {
         long long lo = (N * i) / NUM_TASKS;
         long long hi = (N * (i + 1)) / NUM_TASKS;
 
-        // Build command to run SAME program in child mode for [lo, hi)
         char cmd[256];
         snprintf(cmd, sizeof(cmd), "%s --child %lld %lld", argv[0], lo, hi);
 
-        FILE *fp = popen(cmd, "r");
-        if (!fp)
-        {
-            perror("popen");
-            return 1;
-        }
+        fps[i] = popen(cmd, "r");
+    }
+
+    // --- Collect results from all children ---
+    __int128_t total_sum = 0;
+    for (int i = 0; i < NUM_TASKS; i++)
+    {
+        long long lo = (N * i) / NUM_TASKS;
+        long long hi = (N * (i + 1)) / NUM_TASKS;
 
         unsigned long long partial_sum = 0;
-        if (fscanf(fp, "%llu", &partial_sum) != 1)
+        if (fscanf(fps[i], "%llu", &partial_sum) != 1)
         {
             fprintf(stderr, "Failed reading child %d output for [%lld, %lld).\n",
                     i, lo, hi);
-            pclose(fp);
+            pclose(fps[i]);
+            free(fps);
             return 1;
         }
 
-        pclose(fp);
-        // Grab timestamp
-        clock_gettime(CLOCK_MONOTONIC, &t_end);
-
-        // Calculate work time
-        total_work_time = ((t_end.tv_sec - t_start.tv_sec) * 1e9) + (t_end.tv_nsec - t_start.tv_nsec);
+        pclose(fps[i]);
 
         printf("[parent] chunk %d/%d range [%lld, %lld) partial=%llu\n",
                i + 1, NUM_TASKS, lo, hi, partial_sum);
@@ -140,11 +138,19 @@ int main(int argc, char *argv[])
         total_sum += partial_sum;
     }
 
+    // Get end timestamp after all children have finished
+    clock_gettime(CLOCK_MONOTONIC, &t_end);
+
+    total_work_time = ((t_end.tv_sec - t_start.tv_sec) * 1e9) + (t_end.tv_nsec - t_start.tv_nsec);
+
     // Return success
     printf("Total Sum: ");
     print_int128(total_sum);
     printf("\n");
-    printf("Range: 0 - %lld\nNum of Tasks: %d\nTotal Time: %f (ns) or %f (s)\n", N, NUM_TASKS, total_work_time, total_work_time / 1e9);
+    printf("Range: 0 - %lld\nNum of Tasks: %d\nTotal Time: %f (ns) or %f (s)\n",
+           N, NUM_TASKS, total_work_time, total_work_time / 1e9);
+
+    free(fps);
     return 0;
 }
 

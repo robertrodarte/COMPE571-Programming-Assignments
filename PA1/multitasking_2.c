@@ -5,6 +5,8 @@
 // Brief:   File that calculates the sum (non-inclusive) of variables 0-N.
 //          Divides the workload evenly using multitasking.
 //------------------------------------------------------------------------------
+// Used for timing
+#define _POSIX_C_SOURCE 200112L
 
 //------------------------------------------------------------------------------
 //             __             __   ___  __
@@ -18,6 +20,7 @@
 #include <sys/wait.h>
 #include <inttypes.h>
 #include <string.h>
+#include <time.h>
 
 //-----------------------------------------------------------------------------
 //      __   ___  ___         ___  __
@@ -50,16 +53,8 @@ struct task_data
 //     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
 //     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
 //-----------------------------------------------------------------------------
-static __int128_t sum_range(long long lo, long long h)
-{
-    // Calculate sum for the task
-    __uint128_t sum = 0;
-    for (long long i = lo; i < h; i++)
-    {
-        sum += i;
-    }
-    return sum;
-}
+static __int128_t sum_range(long long lo, long long hi);
+static void print_int128(__int128_t n);
 
 //-----------------------------------------------------------------------------
 //      __        __          __
@@ -70,6 +65,12 @@ static __int128_t sum_range(long long lo, long long h)
 //=============================================================================
 int main(int argc, char *argv[])
 {
+    // Initialize time variables
+    struct timespec t_start, t_end;
+    double total_work_time;
+
+    // Get timestamp
+    clock_gettime(CLOCK_MONOTONIC, &t_start);
 
     // Check if running as child process `--child <lo> <hi>`
     if (argc == 4 && strcmp(argv[1], "--child") == 0)
@@ -97,22 +98,6 @@ int main(int argc, char *argv[])
     // Use different names or just reuse globals
     long long N = atoll(argv[1]);
     int NUM_TASKS = atoi(argv[2]);
-
-    if (N < 2)
-    {
-        fprintf(stderr, "N must be >= 2 (since range is [1, N)).\n");
-        return 1;
-    }
-    if (NUM_TASKS < 1)
-    {
-        fprintf(stderr, "NUM_TASKS must be >= 1.\n");
-        return 1;
-    }
-    if (NUM_TASKS > (N - 1))
-    {
-        NUM_TASKS = N - 1;
-        fprintf(stderr, "Note: Capping NUM_TASKS to %d (numbers in range).\n", NUM_TASKS);
-    }
 
     __int128_t total_sum = 0;
 
@@ -143,6 +128,11 @@ int main(int argc, char *argv[])
         }
 
         pclose(fp);
+        // Grab timestamp
+        clock_gettime(CLOCK_MONOTONIC, &t_end);
+
+        // Calculate work time
+        total_work_time = ((t_end.tv_sec - t_start.tv_sec) * 1e9) + (t_end.tv_nsec - t_start.tv_nsec);
 
         printf("[parent] chunk %d/%d range [%lld, %lld) partial=%llu\n",
                i + 1, NUM_TASKS, lo, hi, partial_sum);
@@ -150,7 +140,54 @@ int main(int argc, char *argv[])
         total_sum += partial_sum;
     }
 
-    printf("[parent] total = %llu\n", (unsigned long long)total_sum);
-
+    // Return success
+    printf("Total Sum: ");
+    print_int128(total_sum);
+    printf("\n");
+    printf("Range: 0 - %lld\nNum of Tasks: %d\nTotal Time: %f (ns) or %f (s)\n", N, NUM_TASKS, total_work_time, total_work_time / 1e9);
     return 0;
 }
+
+//-----------------------------------------------------------------------------
+//      __   __              ___  ___
+//     |__) |__) | \  /  /\   |  |__
+//     |    |  \ |  \/  /~~\  |  |___
+//
+//-----------------------------------------------------------------------------
+//=============================================================================
+
+static __int128_t sum_range(long long lo, long long hi)
+{
+    // Calculate sum for the task
+    __uint128_t sum = 0;
+    for (long long i = lo; i < hi; i++)
+    {
+        sum += i;
+    }
+    return sum;
+}
+
+//=============================================================================
+static void print_int128(__int128_t n)
+{
+    // If negative print a negative sign
+    if (n < 0)
+    {
+        printf("-");
+        n = -n;
+    }
+
+    // If n is greater than 9
+    if (n > 9)
+        // Keep calling recursively to print each digit of the large sum
+        print_int128(n / 10);
+
+    // Print the digit as a char using an ASCII conversion
+    printf("%c", (char)('0' + n % 10));
+}
+
+//-----------------------------------------------------------------------------
+//        __   __   __
+//     | /__` |__) /__`
+//     | .__/ |  \ .__/
+//-----------------------------------------------------------------------------

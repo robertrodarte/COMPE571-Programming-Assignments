@@ -134,10 +134,6 @@ int main(int argc, char *argv[])
        __int128_t partial = ((__int128_t)hi_half << 64) | (__int128_t)lo_half;
 
 
-       printf("[parent] chunk %d/%d range [%lld, %lld) partial=",
-              i + 1, NUM_TASKS, lo, hi);
-       print_int128(partial);
-       printf("\n");
 
 
        total_sum += partial;

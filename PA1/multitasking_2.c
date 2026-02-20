@@ -16,9 +16,6 @@
 //------------------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <inttypes.h>
 #include <string.h>
 #include <time.h>
 
@@ -27,20 +24,12 @@
 //     |  \ |__  |__  | |\ | |__  /__`
 //     |__/ |___ |    | | \| |___ .__/
 //-----------------------------------------------------------------------------
-long long N = 10000000;
-int NUM_TASKS = 2;
 
 //-----------------------------------------------------------------------------
 //     ___      __   ___  __   ___  ___  __
 //      |  \ / |__) |__  |  \ |__  |__  /__`
 //      |   |  |    |___ |__/ |___ |    .__/
 //-----------------------------------------------------------------------------
-struct task_data
-{
-    long long start;
-    long long stop;
-    __int128_t sum;
-};
 
 //-----------------------------------------------------------------------------
 //                __          __        ___  __
@@ -77,21 +66,16 @@ int main(int argc, char *argv[])
 
         __int128_t partial_sum = sum_range(lo, hi);
 
-        // Print Child Partial Sum to stderr for debugging, and to stdout for parent to read
-        fprintf(stderr, "[child] sum [%lld, %lld) = %llu\n",
-                lo, hi, (unsigned long long)partial_sum);
+        // Split __int128_t into two 64-bit halves to pass through pipe
+        unsigned long long lo_half = (unsigned long long)(partial_sum & 0xFFFFFFFFFFFFFFFFULL);
+        unsigned long long hi_half = (unsigned long long)((__uint128_t)partial_sum >> 64);
 
-        printf("%llu\n", (unsigned long long)partial_sum);
+        // Send both halves to parent via stdout pipe
+        printf("%llu %llu\n", hi_half, lo_half);
         return 0;
     }
 
-    // Handle command line inputs for parent process
-    if (argc != 3)
-    {
-        printf("Usage: %s <N> <NUM_TASKS>\n", argv[0]);
-        exit(1);
-    }
-
+    // Handle command line inputs for parent process (assume perfect inputs)
     long long N = atoll(argv[1]);
     int NUM_TASKS = atoi(argv[2]);
 
@@ -120,14 +104,21 @@ int main(int argc, char *argv[])
         long long lo = (N * i) / NUM_TASKS;
         long long hi = (N * (i + 1)) / NUM_TASKS;
 
-        unsigned long long partial_sum = 0;
+        // Read the two 64-bit halves sent by the child via fscanf (IPC through pipe)
+        unsigned long long hi_half = 0, lo_half = 0;
+        fscanf(fps[i], "%llu %llu", &hi_half, &lo_half);
 
         pclose(fps[i]);
 
-        printf("[parent] chunk %d/%d range [%lld, %lld) partial=%llu\n",
-               i + 1, NUM_TASKS, lo, hi, partial_sum);
+        // Reconstruct the __int128_t partial sum from the two halves
+        __int128_t partial = ((__int128_t)hi_half << 64) | (__int128_t)lo_half;
 
-        total_sum += partial_sum;
+        printf("[parent] chunk %d/%d range [%lld, %lld) partial=",
+               i + 1, NUM_TASKS, lo, hi);
+        print_int128(partial);
+        printf("\n");
+
+        total_sum += partial;
     }
 
     // Get end timestamp after all children have finished

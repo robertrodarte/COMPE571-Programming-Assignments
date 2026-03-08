@@ -2,7 +2,7 @@
 // File:    fcfs.c
 // Author:  Nick Schwartz, Robert Rodarte
 // Date:    2026-07-03
-// Brief:   Implementing first come first serve scheduling algorithm
+// Brief:   Implementing multi-level feedback queue scheduling algorithm
 //------------------------------------------------------------------------------
 // Used for timing
 #define _POSIX_C_SOURCE 200112L

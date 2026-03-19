@@ -65,15 +65,12 @@
 //     \  /  /\  |__) |  /\  |__) |    |__  /__`
 //      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
 //-----------------------------------------------------------------------------
-<<<<<<< Updated upstream
-=======
 static struct timespec cs_start, cs_end;
 static double cs_total = 0.0;
 static int cs_count = 0;
 static int cs_running = 0;
 static double rt_total = 0.0;
 static int process_count = 0;
->>>>>>> Stashed changes
 
 //-----------------------------------------------------------------------------
 //      __   __   __  ___  __  ___      __   ___  __

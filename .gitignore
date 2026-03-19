@@ -6,6 +6,9 @@ PA1/multithreading
 PA1/multitasking_one
 PA1/multitasking_2
 
+PA2/fcfs
+PA2/mlfq
+
 # macOS junk
 *.dSYM/
 

@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include <string.h>
 #include <time.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -33,11 +32,6 @@
 #define WORKLOAD3 25000
 #define WORKLOAD4 10000
 
-#define QUANTUM1 1000
-#define QUANTUM2 1000
-#define QUANTUM3 1000
-#define QUANTUM4 1000
-
 //-----------------------------------------------------------------------------
 //     ___      __   ___  __   ___  ___  __
 //      |  \ / |__) |__  |  \ |__  |__  /__`
@@ -49,13 +43,21 @@
 //     \  /  /\  |__) |  /\  |__) |    |__  /__`
 //      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
 //-----------------------------------------------------------------------------
+static struct timespec cs_start, cs_end;
+static double cs_total = 0.0;
+static int cs_count = 0;
+static int cs_running = 0;
+static double rt_total = 0.0;
+static int process_count = 0;
 
 //-----------------------------------------------------------------------------
 //      __   __   __  ___  __  ___      __   ___  __
 //     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
 //     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
 //-----------------------------------------------------------------------------
-void myfunction(int param);
+static void myfunction(int param);
+static void record_cs(void);
+static void record_rt(double time);
 
 //-----------------------------------------------------------------------------
 //      __        __          __
@@ -120,43 +122,48 @@ int main(int argc, char const *argv[])
         At this point, all  newly-created child processes are stopped, and ready for scheduling.
     *************************************************************************************************/
 
-    /************************************************************************************************
-        - Scheduling code starts here
-        - Below is a sample schedule. (which scheduling algorithm is this?)
-        - For the assignment purposes, you have to replace this part with the other scheduling methods
-        to be implemented.
-    ************************************************************************************************/
-
     // First come first serve
     kill(pid1, SIGCONT);
     waitpid(pid1, NULL, 0);
     clock_gettime(CLOCK_MONOTONIC, &end);
     total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
+    record_rt(total1);
     printf("Process 1 Time: %f\n", total1);
+    clock_gettime(CLOCK_MONOTONIC, &cs_start);
+    cs_running = 1;
 
+    record_cs();
     kill(pid2, SIGCONT);
     waitpid(pid2, NULL, 0);
     clock_gettime(CLOCK_MONOTONIC, &end);
     total2 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
+    record_rt(total2);
     printf("Process 2 Time: %f\n", total2);
+    clock_gettime(CLOCK_MONOTONIC, &cs_start);
+    cs_running = 1;
 
+    record_cs();
     kill(pid3, SIGCONT);
     waitpid(pid3, NULL, 0);
     clock_gettime(CLOCK_MONOTONIC, &end);
     total3 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
+    record_rt(total3);
     printf("Process 3 Time: %f\n", total3);
+    clock_gettime(CLOCK_MONOTONIC, &cs_start);
+    cs_running = 1;
 
+    record_cs();
     kill(pid4, SIGCONT);
     waitpid(pid4, NULL, 0);
     clock_gettime(CLOCK_MONOTONIC, &end);
     total4 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
+    record_rt(total4);
     printf("Process 4 Time: %f\n", total4);
 
-    printf("Average Response Time: %f\n", (total1 + total2 + total3 + total4) / 4.0);
-
-    /************************************************************************************************
-        - Scheduling code ends here
-    ************************************************************************************************/
+    printf("Average Response Time: %f s\n", rt_total / process_count);
+    printf("Context Switch Count: %d\n", cs_count);
+    printf("Total Context Switch Time: %.3f ns\n", cs_total * 1E9);
+    printf("Avg Context Switch Time: %.3f ns\n", (cs_total / cs_count) * 1E9);
 
     return 0;
 }
@@ -168,7 +175,26 @@ int main(int argc, char const *argv[])
 //
 //-----------------------------------------------------------------------------
 //=============================================================================
-void myfunction(int param)
+static void record_cs(void)
+{
+    if (cs_running)
+    {
+        clock_gettime(CLOCK_MONOTONIC, &cs_end);
+        cs_total += (cs_end.tv_sec - cs_start.tv_sec) + ((cs_end.tv_nsec - cs_start.tv_nsec) / 1E9);
+        cs_count++;
+        cs_running = 0;
+    }
+}
+
+//=============================================================================
+static void record_rt(double time)
+{
+    rt_total += time;
+    process_count++;
+}
+
+//=============================================================================
+static void myfunction(int param)
 {
 
     int i = 2;

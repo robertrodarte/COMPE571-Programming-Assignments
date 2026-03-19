@@ -5,13 +5,6 @@
 // Brief:   Round-robin process scheduler with context switch timing
 //------------------------------------------------------------------------------
 #define _POSIX_C_SOURCE 200112L
-a//------------------------------------------------------------------------------
-// File:    round_robin.c
-// Author:  Nick Schwartz, Robert Rodarte
-// Date:    2026-03-09
-// Brief:   Round-robin process scheduler with context switch timing
-//------------------------------------------------------------------------------
-#define _POSIX_C_SOURCE 200112L
 
 //------------------------------------------------------------------------------
 //             __             __   ___  __

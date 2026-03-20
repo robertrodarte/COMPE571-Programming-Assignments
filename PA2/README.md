@@ -1,15 +1,18 @@
-# PA2 — CPU Scheduling
+# COMPE571 – Programming Assignment 2
 
-Implements and compares CPU scheduling algorithms to simulate a scheduler. Four child processes run a workload at varying loads; the parent acts as the scheduler.
+**Authors:** Nick Schwartz, Robert Rodarte
+
+---
+
+Implements and compares CPU scheduling algorithms to simulate a scheduler. Four child processes run a workload at varying loads. The parent acts as the scheduler.
 
 ## Files
 
-- **`fcfs.c`** — First Come First Served: runs each process to completion in arrival order
-- **`round_robin.c`** — Round Robin: cycles through processes using a configurable time quantum
-- **`shortest_job_first.c`** — Shortest Job First: schedules processes in order of expected workload (shortest first)
-- **`mlfq.c`** — Multi-Level Feedback Queue: Level 1 is round-robin; processes that exceed the quantum are demoted to Level 2 (FCFS)
-- **`sample_program.c`** — Reference template provided with the assignment, not compiled or run directly
-- **`test_files/`** — Scratch directory used for experimenting with scheduling variations during development
+- **`fcfs.c`** — First Come First Served: Runs each process to completion in arrival order
+- **`round_robin.c`** — Round Robin: Cycles through processes using a configurable time quantum
+- **`shortest_job_first.c`** — Shortest Job First: Schedules processes in order of expected workload (shortest first)
+- **`mlfq.c`** — Multi-Level Feedback Queue: Level 1 is Round-Robin. Processes that exceed the quantum are demoted to Level 2 (FCFS)
+- **`sample_program.c`** — Provided by professor
 
 ## Compile
 
@@ -24,15 +27,7 @@ gcc PA2/mlfq.c -o PA2/mlfq
 
 ```bash
 ./PA2/fcfs
-./PA2/round_robin [quantum_microseconds]       # default: 1000 µs
+./PA2/round_robin [quantum_microseconds] # default: 1000 µs
 ./PA2/shortest_job_first
-./PA2/mlfq [quantum_microseconds]              # default: 1000 µs
+./PA2/mlfq [quantum_microseconds] # default: 1000 µs
 ```
-
-## Metrics Reported
-
-Each scheduler outputs metrics:
-
-- **Response time** — time from process creation to first CPU access
-- **Context switches** — number of times each process was stopped and resumed
-- **Context switch time** — total and average time spent on context switches

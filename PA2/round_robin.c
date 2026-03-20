@@ -43,7 +43,6 @@ static double cs_total = 0.0;
 static int cs_count = 0;
 static int cs_running = 0;
 static double rt_total = 0.0;
-static double rt_times[4] = {0.0};
 static int process_count = 0;
 
 //-----------------------------------------------------------------------------
@@ -54,7 +53,6 @@ static int process_count = 0;
 static void myfunction(int param);
 static void record_cs(void);
 static void record_rt(double time);
-static double calc_stddev(void);
 
 //-----------------------------------------------------------------------------
 //      __        __          __
@@ -70,7 +68,6 @@ int main(int argc, char const *argv[])
 	int ret;
 	struct timespec start, end;
 	double runtime1, runtime2, runtime3, runtime4;
-	double total_exec_time, cs_ratio;
 
 	int quantum = (argc > 1) ? atoi(argv[1]) : DEFAULT_QUANTUM;
 
@@ -212,19 +209,11 @@ int main(int argc, char const *argv[])
 		Scheduling code ends here.
 	**************************************************************************/
 
-	/* --- Summary metrics -------------------------------------------------- */
-	total_exec_time = (end.tv_sec - start.tv_sec) +
-					  ((end.tv_nsec - start.tv_nsec) / 1E9);
-	cs_ratio = (cs_total / total_exec_time) * 100.0;
-
 	printf("\n--- Scheduler Metrics ---\n");
 	printf("Avg  Response Time:        %f s\n", rt_total / process_count);
-	printf("Stddev Response Time:      %f s\n", calc_stddev());
-	printf("Total Execution Time:      %.6f s\n", total_exec_time);
 	printf("Context Switch Count:      %d\n", cs_count);
 	printf("Total Context Switch Time: %.3f ns\n", cs_total * 1E9);
 	printf("Avg  Context Switch Time:  %.3f ns\n", (cs_total / cs_count) * 1E9);
-	printf("Context Switch Overhead:   %.4f%%\n", cs_ratio);
 
 	return 0;
 }
@@ -251,24 +240,8 @@ static void record_cs(void)
 //=============================================================================
 static void record_rt(double time)
 {
-	rt_times[process_count] = time;
 	rt_total += time;
 	process_count++;
-}
-
-//=============================================================================
-static double calc_stddev(void)
-{
-	int i;
-	double mean = rt_total / process_count;
-	double variance = 0.0;
-
-	for (i = 0; i < process_count; i++)
-	{
-		double diff = rt_times[i] - mean;
-		variance += diff * diff;
-	}
-	return __builtin_sqrt(variance / process_count);
 }
 
 //=============================================================================

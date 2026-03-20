@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
-// File:    mlfq.c
+// File:    round_robin.c
 // Author:  Nick Schwartz, Robert Rodarte
-// Date:    2026-07-03
-// Brief:   Implementing multi-level feedback queue scheduling algorithm
+// Date:    2026-03-09
+// Brief:   Round-robin process scheduler with context switch timing
 //------------------------------------------------------------------------------
-// Used for timing
 #define _POSIX_C_SOURCE 200112L
 
 //------------------------------------------------------------------------------
@@ -28,15 +27,11 @@
 //     |__/ |___ |    | | \| |___ .__/
 //-----------------------------------------------------------------------------
 #define WORKLOAD1 100000
-#define WORKLOAD2 50000
-#define WORKLOAD3 25000
-#define WORKLOAD4 10000
+#define WORKLOAD2 100000
+#define WORKLOAD3 100000
+#define WORKLOAD4 100000
 
 #define DEFAULT_QUANTUM 1000
-
-#define DONE_QUEUE 0
-#define RR_QUEUE 1
-#define FCFS_QUEUE 2
 
 //-----------------------------------------------------------------------------
 //                __          __        ___  __
@@ -69,7 +64,7 @@ static void record_rt(double time);
 int main(int argc, char const *argv[])
 {
     pid_t pid1, pid2, pid3, pid4;
-    int queue1, queue2, queue3, queue4;
+    int running1, running2, running3, running4;
     int ret;
     struct timespec start, end;
     double total1, total2, total3, total4;
@@ -109,22 +104,31 @@ int main(int argc, char const *argv[])
     }
     kill(pid4, SIGSTOP);
 
-    /**************************************************************************
-        At this point, all newly-created child processes are stopped,
-        and ready for scheduling.
-    **************************************************************************/
+    /************************************************************************************************
+        At this point, all newly-created child processes are stopped, and ready for scheduling.
+    *************************************************************************************************/
 
-    queue1 = queue2 = queue3 = queue4 = RR_QUEUE;
+    /************************************************************************************************
+        - Scheduling code starts here
+        - Round-robin: each process receives one quantum per cycle, in order.
+          Processes that have exited are skipped in subsequent cycles.
+    ************************************************************************************************/
 
-    // Exit loop if no queues should be round robin
-    while (queue1 == RR_QUEUE || queue2 == RR_QUEUE || queue3 == RR_QUEUE || queue4 == RR_QUEUE)
+    running1 = 1;
+    running2 = 1;
+    running3 = 1;
+    running4 = 1;
+
+    while (running1 > 0 || running2 > 0 || running3 > 0 || running4 > 0)
     {
-        if (queue1 == RR_QUEUE)
+        if (running1 > 0)
         {
             record_cs();
+
             kill(pid1, SIGCONT);
             usleep(quantum);
             kill(pid1, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -134,21 +138,19 @@ int main(int argc, char const *argv[])
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total1);
-                queue1 = DONE_QUEUE;
-                printf("Process 1 Time: %f s\n", total1);
-            }
-            else
-            {
-                queue1 = FCFS_QUEUE;
+                running1 = 0;
+                printf("Process 1 Time: %f\n", total1);
             }
         }
 
-        if (queue2 == RR_QUEUE)
+        if (running2 > 0)
         {
             record_cs();
+
             kill(pid2, SIGCONT);
             usleep(quantum);
             kill(pid2, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -158,21 +160,19 @@ int main(int argc, char const *argv[])
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 total2 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total2);
-                queue2 = DONE_QUEUE;
-                printf("Process 2 Time: %f s\n", total2);
-            }
-            else
-            {
-                queue2 = FCFS_QUEUE;
+                running2 = 0;
+                printf("Process 2 Time: %f\n", total2);
             }
         }
 
-        if (queue3 == RR_QUEUE)
+        if (running3 > 0)
         {
             record_cs();
+
             kill(pid3, SIGCONT);
             usleep(quantum);
             kill(pid3, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -182,21 +182,19 @@ int main(int argc, char const *argv[])
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 total3 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total3);
-                queue3 = DONE_QUEUE;
-                printf("Process 3 Time: %f s\n", total3);
-            }
-            else
-            {
-                queue3 = FCFS_QUEUE;
+                running3 = 0;
+                printf("Process 3 Time: %f\n", total3);
             }
         }
 
-        if (queue4 == RR_QUEUE)
+        if (running4 > 0)
         {
             record_cs();
+
             kill(pid4, SIGCONT);
             usleep(quantum);
             kill(pid4, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -206,72 +204,20 @@ int main(int argc, char const *argv[])
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 total4 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total4);
-                queue4 = DONE_QUEUE;
-                printf("Process 4 Time: %f s\n", total4);
-            }
-            else
-            {
-                queue4 = FCFS_QUEUE;
+                running4 = 0;
+                printf("Process 4 Time: %f\n", total4);
             }
         }
     }
 
-    // If any processes were demoted to FCFS, handle them here
-    if (queue1 == FCFS_QUEUE)
-    {
-        record_cs();
-        kill(pid1, SIGCONT);
-        waitpid(pid1, NULL, 0);
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
-        record_rt(total1);
-        printf("Process 1 Time: %f s\n", total1);
-        clock_gettime(CLOCK_MONOTONIC, &cs_start);
-        cs_running = 1;
-    }
+    /************************************************************************************************
+        - Scheduling code ends here
+    ************************************************************************************************/
 
-    if (queue2 == FCFS_QUEUE)
-    {
-        record_cs();
-        kill(pid2, SIGCONT);
-        waitpid(pid2, NULL, 0);
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        total2 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
-        record_rt(total2);
-        printf("Process 2 Time: %f s\n", total2);
-        clock_gettime(CLOCK_MONOTONIC, &cs_start);
-        cs_running = 1;
-    }
-
-    if (queue3 == FCFS_QUEUE)
-    {
-        record_cs();
-        kill(pid3, SIGCONT);
-        waitpid(pid3, NULL, 0);
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        total3 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
-        record_rt(total3);
-        printf("Process 3 Time: %f s\n", total3);
-        clock_gettime(CLOCK_MONOTONIC, &cs_start);
-        cs_running = 1;
-    }
-
-    if (queue4 == FCFS_QUEUE)
-    {
-        record_cs();
-        kill(pid4, SIGCONT);
-        waitpid(pid4, NULL, 0);
-        clock_gettime(CLOCK_MONOTONIC, &end);
-        total4 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
-        record_rt(total4);
-        printf("Process 4 Time: %f s\n", total4);
-    }
-
-    printf("\n--- Scheduler Metrics ---\n");
-    printf("Avg  Response Time:        %f s\n", rt_total / process_count);
-    printf("Context Switch Count:      %d\n", cs_count);
+    printf("Average Response Time: %f s\n", rt_total / process_count);
+    printf("Context Switch Count: %d\n", cs_count);
     printf("Total Context Switch Time: %.3f ns\n", cs_total * 1E9);
-    printf("Avg  Context Switch Time:  %.3f ns\n", (cs_total / cs_count) * 1E9);
+    printf("Avg Context Switch Time: %.3f ns\n", (cs_total / cs_count) * 1E9);
 
     return 0;
 }
@@ -288,8 +234,7 @@ static void record_cs(void)
     if (cs_running)
     {
         clock_gettime(CLOCK_MONOTONIC, &cs_end);
-        cs_total += (cs_end.tv_sec - cs_start.tv_sec) +
-                    ((cs_end.tv_nsec - cs_start.tv_nsec) / 1E9);
+        cs_total += (cs_end.tv_sec - cs_start.tv_sec) + ((cs_end.tv_nsec - cs_start.tv_nsec) / 1E9);
         cs_count++;
         cs_running = 0;
     }
@@ -303,6 +248,9 @@ static void record_rt(double time)
 }
 
 //=============================================================================
+/************************************************************************************************
+                    DO NOT CHANGE THE FUNCTION IMPLEMENTATION
+*************************************************************************************************/
 static void myfunction(int param)
 {
     int i = 2;
@@ -326,3 +274,10 @@ static void myfunction(int param)
         i++;
     }
 }
+/************************************************************************************************/
+
+//-----------------------------------------------------------------------------
+//        __   __   __
+//     | /__ |__) /__
+//     | .__/ |  \ .__/
+//-----------------------------------------------------------------------------

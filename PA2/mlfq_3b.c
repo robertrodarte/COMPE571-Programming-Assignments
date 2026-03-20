@@ -28,9 +28,9 @@
 //     |__/ |___ |    | | \| |___ .__/
 //-----------------------------------------------------------------------------
 #define WORKLOAD1 100000
-#define WORKLOAD2 50000
-#define WORKLOAD3 25000
-#define WORKLOAD4 10000
+#define WORKLOAD2 100000
+#define WORKLOAD3 100000
+#define WORKLOAD4 100000
 
 #define DEFAULT_QUANTUM 1000
 
@@ -78,77 +78,101 @@ int main(int argc, char const *argv[])
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     pid1 = fork();
+
     if (pid1 == 0)
     {
+
         myfunction(WORKLOAD1);
+
         exit(0);
     }
     kill(pid1, SIGSTOP);
 
     pid2 = fork();
+
     if (pid2 == 0)
     {
+
         myfunction(WORKLOAD2);
+
         exit(0);
     }
     kill(pid2, SIGSTOP);
 
     pid3 = fork();
+
     if (pid3 == 0)
     {
+
         myfunction(WORKLOAD3);
+
         exit(0);
     }
     kill(pid3, SIGSTOP);
 
     pid4 = fork();
+
     if (pid4 == 0)
     {
+
         myfunction(WORKLOAD4);
+
         exit(0);
     }
     kill(pid4, SIGSTOP);
 
-    /**************************************************************************
-        At this point, all newly-created child processes are stopped,
-        and ready for scheduling.
-    **************************************************************************/
+    /************************************************************************************************
+        At this point, all  newly-created child processes are stopped, and ready for scheduling.
+    *************************************************************************************************/
 
-    queue1 = queue2 = queue3 = queue4 = RR_QUEUE;
+    queue1 = RR_QUEUE;
+    queue2 = RR_QUEUE;
+    queue3 = RR_QUEUE;
+    queue4 = RR_QUEUE;
 
     // Exit loop if no queues should be round robin
     while (queue1 == RR_QUEUE || queue2 == RR_QUEUE || queue3 == RR_QUEUE || queue4 == RR_QUEUE)
     {
         if (queue1 == RR_QUEUE)
         {
+            // End of previous context switch
             record_cs();
+
+            // Start signal, run for duration, then pause
             kill(pid1, SIGCONT);
             usleep(quantum);
             kill(pid1, SIGSTOP);
+
+            // Start timing for context switching overhead
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
+            // Check process status (Done: ret == 0)
             ret = waitpid(pid1, NULL, WNOHANG);
             if (ret > 0)
             {
+                // If ret > 0, process is done running, calculate response time for process
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total1);
                 queue1 = DONE_QUEUE;
-                printf("Process 1 Time: %f s\n", total1);
+                printf("Process 1 Time: %f\n", total1);
             }
             else
             {
+                // Otherwise, not finished send to fcfs
                 queue1 = FCFS_QUEUE;
             }
         }
-
         if (queue2 == RR_QUEUE)
         {
+            // End of previous context switch
             record_cs();
+
             kill(pid2, SIGCONT);
             usleep(quantum);
             kill(pid2, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -159,20 +183,22 @@ int main(int argc, char const *argv[])
                 total2 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total2);
                 queue2 = DONE_QUEUE;
-                printf("Process 2 Time: %f s\n", total2);
+                printf("Process 2 Time: %f\n", total2);
             }
             else
             {
                 queue2 = FCFS_QUEUE;
             }
         }
-
         if (queue3 == RR_QUEUE)
         {
+            // End of previous context switch
             record_cs();
+
             kill(pid3, SIGCONT);
             usleep(quantum);
             kill(pid3, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -183,20 +209,22 @@ int main(int argc, char const *argv[])
                 total3 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total3);
                 queue3 = DONE_QUEUE;
-                printf("Process 3 Time: %f s\n", total3);
+                printf("Process 3 Time: %f\n", total3);
             }
             else
             {
                 queue3 = FCFS_QUEUE;
             }
         }
-
         if (queue4 == RR_QUEUE)
         {
+            // End of previous context switch
             record_cs();
+
             kill(pid4, SIGCONT);
             usleep(quantum);
             kill(pid4, SIGSTOP);
+
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
@@ -207,7 +235,7 @@ int main(int argc, char const *argv[])
                 total4 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total4);
                 queue4 = DONE_QUEUE;
-                printf("Process 4 Time: %f s\n", total4);
+                printf("Process 4 Time: %f\n", total4);
             }
             else
             {
@@ -216,62 +244,72 @@ int main(int argc, char const *argv[])
         }
     }
 
-    // If any processes were demoted to FCFS, handle them here
+    // If any processes were demoted to fcfs, handle it here
     if (queue1 == FCFS_QUEUE)
     {
         record_cs();
+
+        // Start process and wait for it to finish
         kill(pid1, SIGCONT);
         waitpid(pid1, NULL, 0);
+
+        // Calculate total response time for process
         clock_gettime(CLOCK_MONOTONIC, &end);
         total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
         record_rt(total1);
-        printf("Process 1 Time: %f s\n", total1);
+        printf("Process 1 Time: %f\n", total1);
+
+        // Record context switch overhead to next process
         clock_gettime(CLOCK_MONOTONIC, &cs_start);
         cs_running = 1;
     }
-
     if (queue2 == FCFS_QUEUE)
     {
         record_cs();
+
         kill(pid2, SIGCONT);
         waitpid(pid2, NULL, 0);
+
         clock_gettime(CLOCK_MONOTONIC, &end);
         total2 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
         record_rt(total2);
-        printf("Process 2 Time: %f s\n", total2);
+        printf("Process 2 Time: %f\n", total2);
+
         clock_gettime(CLOCK_MONOTONIC, &cs_start);
         cs_running = 1;
     }
-
     if (queue3 == FCFS_QUEUE)
     {
         record_cs();
+
         kill(pid3, SIGCONT);
         waitpid(pid3, NULL, 0);
+
         clock_gettime(CLOCK_MONOTONIC, &end);
         total3 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
         record_rt(total3);
-        printf("Process 3 Time: %f s\n", total3);
+        printf("Process 3 Time: %f\n", total3);
+
         clock_gettime(CLOCK_MONOTONIC, &cs_start);
         cs_running = 1;
     }
-
     if (queue4 == FCFS_QUEUE)
     {
         record_cs();
+
         kill(pid4, SIGCONT);
         waitpid(pid4, NULL, 0);
+
         clock_gettime(CLOCK_MONOTONIC, &end);
         total4 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
         record_rt(total4);
-        printf("Process 4 Time: %f s\n", total4);
+        printf("Process 4 Time: %f\n", total4);
     }
 
-    printf("\n--- Scheduler Metrics ---\n");
-    printf("Avg  Response Time:        %f s\n", rt_total / process_count);
-    printf("Context Switch Count:      %d\n", cs_count);
+    printf("Average Response Time: %f s\n", rt_total / process_count);
+    printf("Context Switch Count: %d\n", cs_count);
     printf("Total Context Switch Time: %.3f ns\n", cs_total * 1E9);
-    printf("Avg  Context Switch Time:  %.3f ns\n", (cs_total / cs_count) * 1E9);
+    printf("Avg Context Switch Time: %.3f ns\n", (cs_total / cs_count) * 1E9);
 
     return 0;
 }
@@ -288,8 +326,7 @@ static void record_cs(void)
     if (cs_running)
     {
         clock_gettime(CLOCK_MONOTONIC, &cs_end);
-        cs_total += (cs_end.tv_sec - cs_start.tv_sec) +
-                    ((cs_end.tv_nsec - cs_start.tv_nsec) / 1E9);
+        cs_total += (cs_end.tv_sec - cs_start.tv_sec) + ((cs_end.tv_nsec - cs_start.tv_nsec) / 1E9);
         cs_count++;
         cs_running = 0;
     }
@@ -305,6 +342,7 @@ static void record_rt(double time)
 //=============================================================================
 static void myfunction(int param)
 {
+
     int i = 2;
     int j, k;
 

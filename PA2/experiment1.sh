@@ -92,13 +92,12 @@ AVG_HEADER="Quantum(us),Trial,P1 Time(s),P2 Time(s),P3 Time(s),P4 Time(s),Avg Re
 echo "--- Per-Trial Results ---"
 echo "$TRIAL_HEADER"
 
-for quantum in 1000 10000 35000 70000 100000 1500000; do
-    run_label "$quantum" ./mlfq "$quantum"
+for quantum in 500 1000 2000 10000 100000 1500000; do
+    run_label "$quantum" ./round_robin "$quantum"
 done
 
 
 
-run_label "FCFS" ./fcfs
 
 
 echo ""

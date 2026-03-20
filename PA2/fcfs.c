@@ -143,11 +143,10 @@ int main(int argc, char const *argv[])
     record_rt(total4);
     printf("Process 4 Time: %f s\n", total4);
 
-    printf("\n--- Scheduler Metrics ---\n");
-    printf("Avg  Response Time:        %f s\n", rt_total / process_count);
-    printf("Context Switch Count:      %d\n", cs_count);
+    printf("Avg Response Time: %f s\n", rt_total / process_count);
+    printf("Context Switch Count: %d\n", cs_count);
     printf("Total Context Switch Time: %.3f ns\n", cs_total * 1E9);
-    printf("Avg  Context Switch Time:  %.3f ns\n", (cs_total / cs_count) * 1E9);
+    printf("Avg Context Switch Time: %.3f ns\n", (cs_total / cs_count) * 1E9);
 
     return 0;
 }

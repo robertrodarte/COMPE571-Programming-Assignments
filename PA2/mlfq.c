@@ -75,6 +75,7 @@ int main(int argc, char const *argv[])
     double total1, total2, total3, total4;
     int quantum = (argc > 1) ? atoi(argv[1]) : DEFAULT_QUANTUM;
 
+    // Capture start time for response time
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     pid1 = fork();
@@ -114,31 +115,42 @@ int main(int argc, char const *argv[])
         and ready for scheduling.
     **************************************************************************/
 
-    queue1 = queue2 = queue3 = queue4 = RR_QUEUE;
+    queue1 = RR_QUEUE;
+    queue2 = RR_QUEUE;
+    queue3 = RR_QUEUE;
+    queue4 = RR_QUEUE;
 
     // Exit loop if no queues should be round robin
     while (queue1 == RR_QUEUE || queue2 == RR_QUEUE || queue3 == RR_QUEUE || queue4 == RR_QUEUE)
     {
         if (queue1 == RR_QUEUE)
         {
+            // Handle context switch time
             record_cs();
+            // Run process for quantum period
             kill(pid1, SIGCONT);
             usleep(quantum);
             kill(pid1, SIGSTOP);
+
+            // Start the context switch time
             clock_gettime(CLOCK_MONOTONIC, &cs_start);
             cs_running = 1;
 
+            // Determine if process finished workload (ret > 0)
             ret = waitpid(pid1, NULL, WNOHANG);
             if (ret > 0)
             {
+                // Calculate response time for process
                 clock_gettime(CLOCK_MONOTONIC, &end);
                 total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
                 record_rt(total1);
+                // Send to done if complete
                 queue1 = DONE_QUEUE;
                 printf("Process 1 Time: %f s\n", total1);
             }
             else
             {
+                // Send to FCFS if more work to be done
                 queue1 = FCFS_QUEUE;
             }
         }
@@ -219,13 +231,17 @@ int main(int argc, char const *argv[])
     // If any processes were demoted to FCFS, handle them here
     if (queue1 == FCFS_QUEUE)
     {
+        // Grab context switch time
         record_cs();
+        // Start process and wait for it to finish
         kill(pid1, SIGCONT);
         waitpid(pid1, NULL, 0);
+        // Record response time once completed
         clock_gettime(CLOCK_MONOTONIC, &end);
         total1 = (end.tv_sec - start.tv_sec) + ((end.tv_nsec - start.tv_nsec) / 1E9);
         record_rt(total1);
         printf("Process 1 Time: %f s\n", total1);
+        // Start recording context switch time again
         clock_gettime(CLOCK_MONOTONIC, &cs_start);
         cs_running = 1;
     }
@@ -267,11 +283,11 @@ int main(int argc, char const *argv[])
         printf("Process 4 Time: %f s\n", total4);
     }
 
-    printf("\n--- Scheduler Metrics ---\n");
-    printf("Avg  Response Time:        %f s\n", rt_total / process_count);
-    printf("Context Switch Count:      %d\n", cs_count);
+    // Print metrics recorded
+    printf("Avg Response Time: %f s\n", rt_total / process_count);
+    printf("Context Switch Count: %d\n", cs_count);
     printf("Total Context Switch Time: %.3f ns\n", cs_total * 1E9);
-    printf("Avg  Context Switch Time:  %.3f ns\n", (cs_total / cs_count) * 1E9);
+    printf("Avg Context Switch Time: %.3f ns\n", (cs_total / cs_count) * 1E9);
 
     return 0;
 }

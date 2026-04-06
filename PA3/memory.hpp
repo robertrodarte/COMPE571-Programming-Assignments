@@ -1,0 +1,117 @@
+#ifndef MEMORY_HPP
+#define MEMORY_HPP
+
+using namespace std;
+//------------------------------------------------------------------------------
+//             __             __   ___  __
+//     | |\ | /  ` |    |  | |  \ |__  /__`
+//     | | \| \__, |___ \__/ |__/ |___ .__/
+//
+//------------------------------------------------------------------------------
+#include "loader.hpp"
+#include <iostream>
+#include <vector>
+#include <string>
+//------------------------------------------------------------------------------
+//      __   ___  ___         ___  __
+//     |  \ |__  |__  | |\ | |__  /__`
+//     |__/ |___ |    | | \| |___ .__/
+//
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//     ___      __   ___  __   ___  ___  __
+//      |  \ / |__) |__  |  \ |__  |__  /__`
+//      |   |  |    |___ |__/ |___ |    .__/
+//
+//------------------------------------------------------------------------------
+/**
+ * Used to represent a page table entry for the virtual address space.
+ * @param Dirty: Indicates if the page has been modified (written) since last loaded
+ * into memory.
+ * @param Reference: Indicates if the page has been access (read) since last loaded
+ * into memory.
+ * @param Valid: Indicates if the page is currently loaded in memory.
+ * @param FrameNumber: The frame number in physical memory where the page is loaded.
+ */
+struct PageTableEntry
+{
+    bool dirty;
+    bool reference;
+    bool valid;
+    int frame_number;
+};
+
+/**
+ * Used to represent a page table for the virtual address space.
+ * @param entries: An array of 128 page table entries.
+ */
+struct PageTable
+{
+    PageTableEntry entries[128];
+};
+
+/**
+ * Used to represent a physical frame in memory.
+ * @param pid: Process ID if frame is occupied, -1 if free.
+ * @param page_number: The page number of the process currently occupying the frame.
+ * @param lru: Last recently used counter for the frame.
+ * @param load_time: Timestamp of when the page was loaded into the frame, used for FIFO.
+ */
+struct PhysicalFrame
+{
+    int pid;
+    int page_number;
+    int lru;
+    int load_time;
+};
+
+typedef enum
+{
+    RAND,
+    FIFO,
+    LRU,
+    PER
+} algorithm_t;
+
+//------------------------------------------------------------------------------
+//                __          __        ___  __
+//     \  /  /\  |__) |  /\  |__) |    |__  /__`
+//      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
+//
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//      __   __   __  ___  __  ___      __   ___  __
+//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
+//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
+//
+//------------------------------------------------------------------------------
+class MemorySimulator
+{
+public:
+    // Constructur
+    MemorySimulator();
+
+    // Public methods
+    int handle_memory_reference(MemoryReference &reference, algorithm_t algorithm);
+    int run(vector<MemoryReference> &references, algorithm_t algorithm);
+    int reset();
+    void print_results();
+
+private:
+    // Structure to represent memory
+    PageTable page_table[5]; // Pids 1-4
+    PhysicalFrame physical_memory[32];
+
+    // Metrics variables
+    int timestamp;
+    int page_faults;
+    int disk_refs;
+    int dirty_writes;
+
+    // Private methods
+    int select_victim(algorithm_t algorithm);
+};
+
+#endif /* MEMORY_HPP */

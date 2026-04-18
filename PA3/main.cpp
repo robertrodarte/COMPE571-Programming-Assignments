@@ -2,7 +2,7 @@
 // File:    main.cpp
 // Author:  Nick Schwartz, Robert Rodarte
 // Date:    2026-04-05
-// Brief:   Short description of this module
+// Brief:   Runs the main simulation for the project
 //------------------------------------------------------------------------------
 using namespace std;
 //------------------------------------------------------------------------------
@@ -12,6 +12,8 @@ using namespace std;
 //
 //------------------------------------------------------------------------------
 #include "loader.hpp"
+#include "memory.hpp"
+#include "algorithm.hpp"
 #include <iostream>
 #include <vector>
 //-----------------------------------------------------------------------------
@@ -51,6 +53,13 @@ int main()
     // Load memory references from data files
     vector<MemoryReference> data1_references;
     vector<MemoryReference> data2_references;
+
+    // Initialize memory simulator
+    MemorySimulator simulator;
+
+    // Initialize algorithms here
+
+    // Load references
     if (load_memory_references(DATA1_FILE, data1_references) != 0)
     {
         cerr << "Error loading memory references from " << DATA1_FILE << endl;
@@ -62,13 +71,19 @@ int main()
         return -1;
     }
 
-    // Handle memory references
-    // For each memory reference
-    // - Grab virtual page number
-    // - Grab the page table entry
-    // - Check if the entry is valid
-    // - If valid, update bits
-    // else handle page fault
+    // Run simulations for text files
+    for (int i = 0; i < sizeof(algorithm_list) / sizeof(Algorithm); i++)
+    {
+        cout << "Running simulation for data1.txt with " << algorithm_list[i] << " algorithm..." << endl;
+        simulator.run(data1_references, algorithm_list[i]);
+        simulator.reset();
+
+        cout << "Running simulation for data2.txt with " << algorithm_list[i] << " algorithm..." << endl;
+        simulator.run(data2_references, algorithm_list[i]);
+        simulator.reset();
+        cout << "Simulation for " << algorithm_list[i] << " algorithm completed." << endl;
+    }
+
     return 0;
 }
 

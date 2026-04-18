@@ -66,14 +66,6 @@ struct PhysicalFrame
     int load_time;
 };
 
-typedef enum
-{
-    RAND,
-    FIFO,
-    LRU,
-    PER
-} algorithm_t;
-
 //------------------------------------------------------------------------------
 //                __          __        ___  __
 //     \  /  /\  |__) |  /\  |__) |    |__  /__`
@@ -94,8 +86,8 @@ public:
     MemorySimulator();
 
     // Public methods
-    int handle_memory_reference(MemoryReference &reference, algorithm_t algorithm);
-    int run(vector<MemoryReference> &references, algorithm_t algorithm);
+    int handle_memory_reference(MemoryReference &reference, Algorithm algorithm);
+    int run(vector<MemoryReference> &references, Algorithm algorithm);
     int reset();
     void print_results();
 
@@ -111,7 +103,7 @@ private:
     int dirty_writes;
 
     // Private methods
-    int select_victim(algorithm_t algorithm);
+    int select_victim(Algorithm algorithm);
 };
 
 #endif /* MEMORY_HPP */

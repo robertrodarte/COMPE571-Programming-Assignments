@@ -9,6 +9,8 @@ PA1/multitasking_2
 PA2/fcfs
 PA2/mlfq
 
+PA3/vm_sim
+
 # macOS junk
 *.dSYM/
 

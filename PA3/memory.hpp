@@ -12,6 +12,7 @@ using namespace std;
 #include <iostream>
 #include <vector>
 #include <string>
+class Algorithm;
 //------------------------------------------------------------------------------
 //      __   ___  ___         ___  __
 //     |  \ |__  |__  | |\ | |__  /__`
@@ -86,9 +87,9 @@ public:
     MemorySimulator();
 
     // Public methods
-    int handle_memory_reference(MemoryReference &reference, Algorithm algorithm);
-    int run(vector<MemoryReference> &references, Algorithm algorithm);
-    int reset();
+    int handle_memory_reference(MemoryReference &reference, Algorithm *algorithm);
+    int run(vector<MemoryReference> &references, Algorithm *algorithm);
+    void reset();
     void print_results();
 
 private:
@@ -103,7 +104,7 @@ private:
     int dirty_writes;
 
     // Private methods
-    int select_victim(Algorithm algorithm);
+    int select_victim(Algorithm *algorithm);
 };
 
 #endif /* MEMORY_HPP */

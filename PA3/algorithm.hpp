@@ -24,11 +24,20 @@
 //      |  \ / |__) |__  |  \ |__  |__  /__`
 //      |   |  |    |___ |__/ |___ |    .__/
 //-----------------------------------------------------------------------------
+enum AlgorithmType
+{
+    RANDt,
+    FIFOt,
+    LRUt,
+    PERt
+};
+
 class Algorithm
 {
 public:
     virtual ~Algorithm() = default;
     virtual int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) = 0;
+    virtual AlgorithmType getType() = 0;
 };
 //-----------------------------------------------------------------------------
 //                __          __        ___  __
@@ -45,24 +54,28 @@ class FIFO : public Algorithm
 {
 public:
     int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) override;
+    AlgorithmType getType() override { return FIFOt; }
 };
 
 class LRU : public Algorithm
 {
 public:
     int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) override;
+    AlgorithmType getType() override { return LRUt; }
 };
 
 class Rand : public Algorithm
 {
 public:
     int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) override;
+    AlgorithmType getType() override { return RANDt; }
 };
 
 class PER : public Algorithm
 {
 public:
     int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) override;
+    AlgorithmType getType() override { return PERt; }
 };
 //-----------------------------------------------------------------------------
 //      __        __          __

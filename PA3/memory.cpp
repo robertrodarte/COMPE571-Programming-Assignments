@@ -49,7 +49,7 @@ MemorySimulator::MemorySimulator()
 }
 
 // Public methods
-int MemorySimulator::handle_memory_reference(MemoryReference &reference, Algorithm algorithm)
+int MemorySimulator::handle_memory_reference(MemoryReference &reference, Algorithm *algorithm)
 {
     int vpn; // Virtual page number
     int free_frame = -1;
@@ -125,7 +125,7 @@ int MemorySimulator::handle_memory_reference(MemoryReference &reference, Algorit
     timestamp++;
 
     // Reset reference bits for PER algorithm
-    if (algorithm == PER)
+    if (algorithm->getType() == PERt)
     {
         if ((timestamp % 200 == 0))
         {
@@ -142,7 +142,7 @@ int MemorySimulator::handle_memory_reference(MemoryReference &reference, Algorit
     return 0;
 }
 
-int MemorySimulator::run(vector<MemoryReference> &references, Algorithm algorithm)
+int MemorySimulator::run(vector<MemoryReference> &references, Algorithm *algorithm)
 {
     // Loop through each memory reference and handle it
     for (MemoryReference &ref : references)
@@ -157,7 +157,7 @@ int MemorySimulator::run(vector<MemoryReference> &references, Algorithm algorith
     return 0;
 }
 
-int MemorySimulator::reset()
+void MemorySimulator::reset()
 {
     // Initialize metrics
     timestamp = 0;
@@ -197,9 +197,9 @@ void MemorySimulator::print_results()
 }
 
 // Private method
-int MemorySimulator::select_victim(Algorithm algorithm)
+int MemorySimulator::select_victim(Algorithm *algorithm)
 {
-    // Implementation
+    return algorithm->run(physical_memory, page_table);
 }
 
 //-----------------------------------------------------------------------------

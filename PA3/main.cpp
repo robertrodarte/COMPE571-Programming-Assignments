@@ -27,8 +27,8 @@ using namespace std;
 //      |  \ / |__) |__  |  \ |__  |__  /__`
 //      |   |  |    |___ |__/ |___ |    .__/
 //-----------------------------------------------------------------------------
-#define DATA1_FILE "data1.txt"
-#define DATA2_FILE "data2.txt"
+#define DATA1_FILE "data/data1.txt"
+#define DATA2_FILE "data/data2.txt"
 //-----------------------------------------------------------------------------
 //                __          __        ___  __
 //     \  /  /\  |__) |  /\  |__) |    |__  /__`
@@ -58,6 +58,11 @@ int main()
     MemorySimulator simulator;
 
     // Initialize algorithms here
+    Rand rand_algo;
+    FIFO fifo_algo;
+    LRU lru_algo;
+    PER per_algo;
+    Algorithm *algorithms[] = {&rand_algo, &fifo_algo, &lru_algo, &per_algo};
 
     // Load references
     if (load_memory_references(DATA1_FILE, data1_references) != 0)
@@ -72,16 +77,16 @@ int main()
     }
 
     // Run simulations for text files
-    for (int i = 0; i < sizeof(algorithm_list) / sizeof(Algorithm); i++)
+    string algo_names[] = {"RAND", "FIFO", "LRU", "PER"};
+    for (int i = 0; i < sizeof(algorithms) / sizeof(Algorithm *); i++)
     {
-        cout << "Running simulation for data1.txt with " << algorithm_list[i] << " algorithm..." << endl;
-        simulator.run(data1_references, algorithm_list[i]);
+        cout << "\nRunning " << algo_names[i] << " on data1.txt..." << endl;
+        simulator.run(data1_references, algorithms[i]);
         simulator.reset();
 
-        cout << "Running simulation for data2.txt with " << algorithm_list[i] << " algorithm..." << endl;
-        simulator.run(data2_references, algorithm_list[i]);
+        cout << "\nRunning " << algo_names[i] << " on data2.txt..." << endl;
+        simulator.run(data2_references, algorithms[i]);
         simulator.reset();
-        cout << "Simulation for " << algorithm_list[i] << " algorithm completed." << endl;
     }
 
     return 0;

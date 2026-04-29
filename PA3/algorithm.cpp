@@ -64,6 +64,52 @@ int LRU::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
     return page;
 }
 
+BEST::BEST(const vector<MemoryReference>& refs) : refs_size((int)refs.size())
+{
+    for (int i = 0; i < (int)refs.size(); i++)
+    {
+        int vpn = refs[i].address >> 9;
+        access_times[refs[i].pid][vpn].push_back(i);
+    }
+}
+
+int BEST::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
+{
+    // Use max lru across all frames as a proxy for current timestamp
+    int current_time = 0;
+    for (int i = 0; i < 32; i++)
+        if (physical_memory[i].pid != -1 && physical_memory[i].lru > current_time)
+            current_time = physical_memory[i].lru;
+
+    int victim = 0;
+    int furthest = -1;
+
+    for (int i = 0; i < 32; i++)
+    {
+        int pid = physical_memory[i].pid;
+        int vpn = physical_memory[i].page_number;
+
+        // Find next access to this (pid, vpn) after current_time
+        int next_use = refs_size; // refs_size means "never accessed again"
+        for (int k = 0; k < (int)access_times[pid][vpn].size(); k++)
+        {
+            if (access_times[pid][vpn][k] > current_time)
+            {
+                next_use = access_times[pid][vpn][k];
+                break;
+            }
+        }
+
+        if (next_use > furthest)
+        {
+            furthest = next_use;
+            victim = i;
+        }
+    }
+
+    return victim;
+}
+
 int PER::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
 {
     // Pass 1: unused frame (pid == -1, no page loaded yet)

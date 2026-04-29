@@ -29,7 +29,8 @@ enum AlgorithmType
     RANDt,
     FIFOt,
     LRUt,
-    PERt
+    PERt,
+    BESTt
 };
 
 class Algorithm
@@ -76,6 +77,17 @@ class PER : public Algorithm
 public:
     int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) override;
     AlgorithmType getType() override { return PERt; }
+};
+
+class BEST : public Algorithm
+{
+public:
+    BEST(const vector<MemoryReference>& refs);
+    int run(PhysicalFrame physical_memory[32], PageTable page_table[5]) override;
+    AlgorithmType getType() override { return BESTt; }
+private:
+    vector<int> access_times[5][128]; // [pid][vpn] -> sorted list of access timestamps
+    int refs_size;
 };
 //-----------------------------------------------------------------------------
 //      __        __          __

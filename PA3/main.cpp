@@ -29,6 +29,7 @@ using namespace std;
 //-----------------------------------------------------------------------------
 #define DATA1_FILE "data/data1.txt"
 #define DATA2_FILE "data/data2.txt"
+#define N 10
 //-----------------------------------------------------------------------------
 //                __          __        ___  __
 //     \  /  /\  |__) |  /\  |__) |    |__  /__`
@@ -62,7 +63,6 @@ int main()
     FIFO fifo_algo;
     LRU lru_algo;
     PER per_algo;
-    Algorithm *algorithms[] = {&rand_algo, &fifo_algo, &lru_algo, &per_algo};
 
     // Load references
     if (load_memory_references(DATA1_FILE, data1_references) != 0)
@@ -76,16 +76,24 @@ int main()
         return -1;
     }
 
+    // BEST needs the full reference list, so create after loading
+    BEST best_d1(data1_references);
+    BEST best_d2(data2_references);
+
+    string algo_names[] = {"RAND", "FIFO", "LRU", "PER", "BEST"};
+    Algorithm *algos_d1[] = {&rand_algo, &fifo_algo, &lru_algo, &per_algo, &best_d1};
+    Algorithm *algos_d2[] = {&rand_algo, &fifo_algo, &lru_algo, &per_algo, &best_d2};
+    int num_algos = sizeof(algos_d1) / sizeof(Algorithm *);
+
     // Run simulations for text files
-    string algo_names[] = {"RAND", "FIFO", "LRU", "PER"};
-    for (int i = 0; i < sizeof(algorithms) / sizeof(Algorithm *); i++)
+    for (int i = 0; i < num_algos; i++)
     {
         cout << "\nRunning " << algo_names[i] << " on data1.txt..." << endl;
-        simulator.run(data1_references, algorithms[i]);
+        simulator.run(data1_references, algos_d1[i]);
         simulator.reset();
 
         cout << "\nRunning " << algo_names[i] << " on data2.txt..." << endl;
-        simulator.run(data2_references, algorithms[i]);
+        simulator.run(data2_references, algos_d2[i]);
         simulator.reset();
     }
 

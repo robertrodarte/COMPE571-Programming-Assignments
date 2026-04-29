@@ -80,6 +80,16 @@ struct PhysicalFrame
 //     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
 //
 //------------------------------------------------------------------------------
+struct SimResult
+{
+    string algo_name;
+    string dataset;
+    int run_number;
+    int page_faults;
+    int disk_refs;
+    int dirty_writes;
+};
+
 class MemorySimulator
 {
 public:
@@ -91,6 +101,7 @@ public:
     int run(vector<MemoryReference> &references, Algorithm *algorithm);
     void reset();
     void print_results();
+    SimResult get_results(string algo_name, string dataset, int run_number);
 
 private:
     // Structure to represent memory

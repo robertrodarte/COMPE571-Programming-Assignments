@@ -67,19 +67,15 @@ struct PhysicalFrame
     int load_time;
 };
 
-//------------------------------------------------------------------------------
-//                __          __        ___  __
-//     \  /  /\  |__) |  /\  |__) |    |__  /__`
-//      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
-//
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-//      __   __   __  ___  __  ___      __   ___  __
-//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
-//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
-//
-//------------------------------------------------------------------------------
+/**
+ * Represents the results of a simulation run
+ * @param algo_name: The name of the algorithm used
+ * @param dataset: The name of the dataset used
+ * @param run_number: The number of the run
+ * @param page_faults: The number of page faults
+ * @param disk_refs: The number of disk references
+ * @param dirty_writes: The number of dirty writes
+ */
 struct SimResult
 {
     string algo_name;
@@ -90,10 +86,19 @@ struct SimResult
     int dirty_writes;
 };
 
+//------------------------------------------------------------------------------
+//      __   __   __  ___  __  ___      __   ___  __
+//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
+//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
+//
+//------------------------------------------------------------------------------
+/**
+ * Represents the memory simulator for the virtual memory system
+ */
 class MemorySimulator
 {
 public:
-    // Constructur
+    // Constructor
     MemorySimulator();
 
     // Public methods

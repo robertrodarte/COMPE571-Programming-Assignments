@@ -3,7 +3,7 @@
 // File:    algorithm.cpp
 // Author:  Nick Schwartz, Robert Rodarte
 // Date:    2026-04-05
-// Brief:   Short description of this module
+// Brief:   Implements the page replacement algorithms
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 //             __             __   ___  __
@@ -11,41 +11,38 @@
 //     | | \| \__, |___ \__/ |__/ |___ .__/
 //
 //------------------------------------------------------------------------------
-
 #include "algorithm.hpp"
 #include <cstdlib>
-//-----------------------------------------------------------------------------
-//      __   ___  ___         ___  __
-//     |  \ |__  |__  | |\ | |__  /__`
-//     |__/ |___ |    | | \| |___ .__/
-//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-//     ___      __   ___  __   ___  ___  __
-//      |  \ / |__) |__  |  \ |__  |__  /__`
-//      |   |  |    |___ |__/ |___ |    .__/
+//      __        __          __
+//     |__) |  | |__) |    | /  `
+//     |    \__/ |__) |___ | \__,
+//
 //-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//                __          __        ___  __
-//     \  /  /\  |__) |  /\  |__) |    |__  /__`
-//      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//      __   __   __  ___  __  ___      __   ___  __
-//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
-//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
-//-----------------------------------------------------------------------------
-int Rand::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
+//=============================================================================
+/**
+ * Returns a random frame number.
+ * @param physical_memory: The physical memory array
+ * @param page_table: The page table array
+ * @return: A random frame number to evict
+ */
+int Rand::run(PhysicalFrame physical_memory[MAX_FRAMES], PageTable page_table[MAX_PROCESSES])
 {
-    return rand() % 32;
+    return rand() % MAX_FRAMES;
 }
 
-int FIFO::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
+//=============================================================================
+/**
+ * Returns the frame number of the page that has been in memory the longest (FIFO).
+ * @param physical_memory: The physical memory array
+ * @param page_table: The page table array
+ * @return: The frame number of the page to evict
+ */
+int FIFO::run(PhysicalFrame physical_memory[MAX_FRAMES], PageTable page_table[MAX_PROCESSES])
 {
     int page = 0;
-    for (int i = 1; i < 32; i++)
+    for (int i = 1; i < MAX_FRAMES; i++)
     {
         if (physical_memory[i].load_time < physical_memory[page].load_time)
             page = i;
@@ -53,10 +50,17 @@ int FIFO::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
     return page;
 }
 
-int LRU::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
+//=============================================================================
+/**
+ * Returns the frame number of the page that has been used least recently (LRU).
+ * @param physical_memory: The physical memory array
+ * @param page_table: The page table array
+ * @return: The frame number of the page to evict
+ */
+int LRU::run(PhysicalFrame physical_memory[MAX_FRAMES], PageTable page_table[MAX_PROCESSES])
 {
     int page = 0;
-    for (int i = 1; i < 32; i++)
+    for (int i = 1; i < MAX_FRAMES; i++)
     {
         if (physical_memory[i].lru < physical_memory[page].lru)
             page = i;
@@ -64,27 +68,39 @@ int LRU::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
     return page;
 }
 
-BEST::BEST(const vector<MemoryReference>& refs) : refs_size((int)refs.size())
+//============================================================================= */
+/**
+ * Constructor for the BEST class which initializes the access times for each page.
+ * @param refs: A vector of memory references
+ */
+BEST::BEST(const vector<MemoryReference> &refs) : refs_size((int)refs.size())
 {
     for (int i = 0; i < (int)refs.size(); i++)
     {
-        int vpn = refs[i].address >> 9;
+        int vpn = refs[i].address >> OFFSET;
         access_times[refs[i].pid][vpn].push_back(i);
     }
 }
 
-int BEST::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
+//=============================================================================
+/**
+ * Returns the frame number of the page that will be used the furthest in the future (OPT).
+ * @param physical_memory: The physical memory array
+ * @param page_table: The page table array
+ * @return: The frame number of the page to evict
+ */
+int BEST::run(PhysicalFrame physical_memory[MAX_FRAMES], PageTable page_table[MAX_PROCESSES])
 {
     // Use max lru across all frames as a proxy for current timestamp
     int current_time = 0;
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < MAX_FRAMES; i++)
         if (physical_memory[i].pid != -1 && physical_memory[i].lru > current_time)
             current_time = physical_memory[i].lru;
 
     int victim = 0;
     int furthest = -1;
 
-    for (int i = 0; i < 32; i++)
+    for (int i = 0; i < MAX_FRAMES; i++)
     {
         int pid = physical_memory[i].pid;
         int vpn = physical_memory[i].page_number;
@@ -110,6 +126,13 @@ int BEST::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
     return victim;
 }
 
+//=============================================================================
+/**
+ * Returns the frame number of the page that will be evicted according to the Page Replacement (PER) algorithm.
+ * @param physical_memory: The physical memory array
+ * @param page_table: The page table array
+ * @return: The frame number of the page to evict
+ */
 int PER::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
 {
     // Pass 1: unused frame (pid == -1, no page loaded yet)
@@ -155,24 +178,3 @@ int PER::run(PhysicalFrame physical_memory[32], PageTable page_table[5])
 
     return 0;
 }
-
-//-----------------------------------------------------------------------------
-//      __        __          __
-//     |__) |  | |__) |    | /  `
-//     |    \__/ |__) |___ | \__,
-//
-//-----------------------------------------------------------------------------
-//=============================================================================
-
-//-----------------------------------------------------------------------------
-//      __   __              ___  ___
-//     |__) |__) | \  /  /\   |  |__
-//     |    |  \ |  \/  /~~\  |  |___
-//
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//        __   __   __
-//     | /__ |__) /__
-//     | .__/ |  \ .__/
-//-----------------------------------------------------------------------------

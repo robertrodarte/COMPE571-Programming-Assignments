@@ -8,3 +8,4 @@ Programming assignments for COMPE 571, an embedded operating systems course.
 | ---------- | ------------------------------------------------------------------------ |
 | PA1        | Parallelization — sequential, multithreaded, and multiprocess approaches |
 | PA2        | CPU Scheduling — FCFS, Round Robin, SJF, and MLFQ implementations        |
+| PA3        | Virtual Memory Simulation — page tables and page replacement algorithms   |

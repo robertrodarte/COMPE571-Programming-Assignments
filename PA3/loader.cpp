@@ -1,8 +1,8 @@
 //------------------------------------------------------------------------------
-// File:    module.cpp
+// File:    loader.cpp
 // Author:  Nick Schwartz, Robert Rodarte
 // Date:    2026-04-05
-// Brief:   This file contains the implementation of the loader module, whhich
+// Brief:   This file contains the implementation of the loader module, which
 //          is responsible for loading memory references from data.txt files
 //          into a vector of MemoryReference structs.
 //------------------------------------------------------------------------------
@@ -16,29 +16,6 @@ using namespace std;
 #include "loader.hpp"
 #include <iostream>
 #include <fstream> // Used for file I/O operations
-//-----------------------------------------------------------------------------
-//      __   ___  ___         ___  __
-//     |  \ |__  |__  | |\ | |__  /__`
-//     |__/ |___ |    | | \| |___ .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//     ___      __   ___  __   ___  ___  __
-//      |  \ / |__) |__  |  \ |__  |__  /__`
-//      |   |  |    |___ |__/ |___ |    .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//                __          __        ___  __
-//     \  /  /\  |__) |  /\  |__) |    |__  /__`
-//      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//      __   __   __  ___  __  ___      __   ___  __
-//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
-//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
-//-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
 //      __        __          __
@@ -46,8 +23,9 @@ using namespace std;
 //     |    \__/ |__) |___ | \__,
 //
 //-----------------------------------------------------------------------------
+//=============================================================================
 /**
- * Loades memory references from a data file into a vector of MemoryReference structs.
+ * Loads memory references from a data file into a vector of MemoryReference structs.
  * @param filename The path of the data file to load from.
  * @param references The vector to store the loaded memory references in.
  * @return 0 on success, -1 on failure.
@@ -63,7 +41,7 @@ int load_memory_references(const char *filename, vector<MemoryReference> &refere
         return -1;
     }
 
-    // Reach each line and store the memory reference in the vector
+    // Read each line and store the memory reference in the vector
     MemoryReference ref;
     while (infile >> ref.pid >> ref.address >> ref.rw)
     {
@@ -76,16 +54,3 @@ int load_memory_references(const char *filename, vector<MemoryReference> &refere
     // Return success
     return 0;
 }
-
-//-----------------------------------------------------------------------------
-//      __   __              ___  ___
-//     |__) |__) | \  /  /\   |  |__
-//     |    |  \ |  \/  /~~\  |  |___
-//
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//        __   __   __
-//     | /__` |__) /__`
-//     | .__/ |  \ .__/
-//-----------------------------------------------------------------------------

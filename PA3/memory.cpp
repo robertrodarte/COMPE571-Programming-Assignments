@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// File:    module.cpp
+// File:    memory.cpp
 // Author:  Nick Schwartz, Robert Rodarte
 // Date:    2026-04-18
 // Brief:   Handles memory simulation for the project
@@ -12,29 +12,15 @@
 //------------------------------------------------------------------------------
 #include "memory.hpp"
 #include "algorithm.hpp"
-//-----------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
 //      __   ___  ___         ___  __
 //     |  \ |__  |__  | |\ | |__  /__`
 //     |__/ |___ |    | | \| |___ .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//     ___      __   ___  __   ___  ___  __
-//      |  \ / |__) |__  |  \ |__  |__  /__`
-//      |   |  |    |___ |__/ |___ |    .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//                __          __        ___  __
-//     \  /  /\  |__) |  /\  |__) |    |__  /__`
-//      \/  /~~\ |  \ | /~~\ |__) |___ |___ .__/
-//-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//      __   __   __  ___  __  ___      __   ___  __
-//     |__) |__) /  \  |  /  \  |  \ / |__) |__  /__`
-//     |    |  \ \__/  |  \__/  |   |  |    |___ .__/
-//-----------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+#define FREE_FRAME -1; // Indicates a free frame
+#define OFFSET 9;      // Number of bits to shift to get vpn
 
 //-----------------------------------------------------------------------------
 //      __        __          __
@@ -42,22 +28,32 @@
 //     |    \__/ |__) |___ | \__,
 //
 //-----------------------------------------------------------------------------
+//=============================================================================
+/**
+ * Constructor for the MemorySimulator class
+ */
 MemorySimulator::MemorySimulator()
 {
     // Reset the sim before running
     reset();
 }
 
-// Public methods
+//=============================================================================
+/**
+ * Handles a single memory reference
+ * @param reference The memory reference to handle
+ * @param algorithm The algorithm to use for page replacement
+ * @return 0 on success, -1 on failure
+ */
 int MemorySimulator::handle_memory_reference(MemoryReference &reference, Algorithm *algorithm)
 {
     int vpn; // Virtual page number
-    int free_frame = -1;
+    int free_frame = FREE_FRAME;
     int old_pid;
     int old_vpn;
 
     // First, check if the page is already in physical memory
-    vpn = reference.address >> 9;
+    vpn = reference.address >> OFFSET; // Grab virtual page number from virtual address
     if (page_table[reference.pid].entries[vpn].valid)
     {
         // If it is, update the reference bit and dirty bit if necessary
@@ -142,6 +138,13 @@ int MemorySimulator::handle_memory_reference(MemoryReference &reference, Algorit
     return 0;
 }
 
+//=============================================================================
+/**
+ * Runs the memory simulation
+ * @param references The vector of memory references to process
+ * @param algorithm The algorithm to use for page replacement
+ * @return 0 on success, -1 on failure
+ */
 int MemorySimulator::run(vector<MemoryReference> &references, Algorithm *algorithm)
 {
     // Loop through each memory reference and handle it
@@ -150,13 +153,17 @@ int MemorySimulator::run(vector<MemoryReference> &references, Algorithm *algorit
         handle_memory_reference(ref, algorithm);
     }
 
-    // After processsing all references, print the results
+    // After processing all references, print the results
     print_results();
 
     // Return 0 on success, -1 on failure
     return 0;
 }
 
+//=============================================================================
+/**
+ * Resets the memory simulator to its initial state
+ */
 void MemorySimulator::reset()
 {
     // Initialize metrics
@@ -188,6 +195,10 @@ void MemorySimulator::reset()
     }
 }
 
+//=============================================================================
+/**
+ * Prints the results of the memory simulation
+ */
 void MemorySimulator::print_results()
 {
     // Print the results of the simulation
@@ -196,21 +207,18 @@ void MemorySimulator::print_results()
     cout << "Dirty Writes: " << dirty_writes << endl;
 }
 
-// Private method
-int MemorySimulator::select_victim(Algorithm *algorithm)
-{
-    return algorithm->run(physical_memory, page_table);
-}
-
 //-----------------------------------------------------------------------------
 //      __   __              ___  ___
 //     |__) |__) | \  /  /\   |  |__
 //     |    |  \ |  \/  /~~\  |  |___
 //
 //-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-//        __   __   __
-//     | /__` |__) /__`
-//     | .__/ |  \ .__/
-//-----------------------------------------------------------------------------
+/**
+ * Selects a victim page for replacement
+ * @param algorithm The algorithm to use for page replacement
+ * @return The index of the selected victim page
+ */
+int MemorySimulator::select_victim(Algorithm *algorithm)
+{
+    return algorithm->run(physical_memory, page_table);
+}
